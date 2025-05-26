@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import db from "../models";
-import { IUser } from '../models/user.model';
-import { IRole } from '../models/role.model';
+import { Auth } from '../models/auth.model';
 
-const User = db.user;
 const Role = db.role;
 
 interface DecodedToken {
@@ -15,7 +13,7 @@ interface DecodedToken {
 }
 
 interface AuthRequest extends Request {
-  user?: DecodedToken;
+  metadata?: DecodedToken;
 }
 
 const verifyToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -34,7 +32,7 @@ const verifyToken = async (req: AuthRequest, res: Response, next: NextFunction):
 
     const decoded = jwt.verify(token, secret) as DecodedToken;
 
-    req.user = {
+    req.metadata = {
       id: decoded.id,
       username: decoded.username,
       email: decoded.email,
@@ -49,18 +47,18 @@ const verifyToken = async (req: AuthRequest, res: Response, next: NextFunction):
 
 const isAdmin = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    if (!req.user?.id) {
+    if (!req.metadata?.id) {
       res.status(401).json({ message: "User not authenticated" });
       return;
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await Auth.findById(req.metadata.id);
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
-    const roles = await Role.find({ _id: { $in: user.roles } });
+    const roles = await Role.find({ enum: { $in: user.roles } });
     if (roles.some(role => role.name === "admin")) {
       next();
       return;
@@ -74,18 +72,18 @@ const isAdmin = async (req: AuthRequest, res: Response, next: NextFunction): Pro
 
 const isModerator = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    if (!req.user?.id) {
+    if (!req.metadata?.id) {
       res.status(401).json({ message: "User not authenticated" });
       return;
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await Auth.findById(req.metadata.id);
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
-    const roles = await Role.find({ _id: { $in: user.roles } });
+    const roles = await Role.find({ enum: { $in: user.roles } });
     if (roles.some(role => role.name === "moderator" || role.name === "admin")) {
       next();
       return;

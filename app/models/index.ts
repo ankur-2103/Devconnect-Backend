@@ -8,7 +8,6 @@ interface IDatabase {
   user: typeof User;
   role: typeof Role;
   auth: typeof Auth;
-  ROLES: string[];
 }
 
 const db: IDatabase = {
@@ -16,7 +15,6 @@ const db: IDatabase = {
   user: User,
   role: Role,
   auth: Auth,
-  ROLES: ["user", "admin", "moderator"]
 };
 
 export default db; 
