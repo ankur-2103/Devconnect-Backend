@@ -54,7 +54,9 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 const MONGODB_URI = `mongodb+srv://ankurvasta123:${process.env.PASSWORD}@cluster0.1f6xg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 mongoose
-  .connect(MONGODB_URI)
+  .connect(
+    `mongodb+srv://ankurvasta123:${process.env.PASSWORD}@cluster0.1f6xg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+  )
   .then(async () => {
     console.log("Connected to MongoDB");
     // try {
