@@ -24,16 +24,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Swagger UI setup
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument, {
-    customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "DevConnect API Documentation",
-  })
-);
-
 // Routes
 import authRoutes from "./app/routes/auth.routes";
 import userRoutes from "./app/routes/user.routes";
@@ -118,3 +108,13 @@ app.listen(PORT, () => {
     `API Documentation available at http://localhost:${PORT}/api-docs`
   );
 });
+
+// Swagger UI setup
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "DevConnect API Documentation",
+  })
+);
