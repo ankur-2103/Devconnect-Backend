@@ -106,8 +106,11 @@ const swaggerOptions = {
   customSiteTitle: "DevConnect API Documentation",
 };
 
-app.use("/api-docs", swaggerUi.serve);
-app.get("/api-docs", swaggerUi.setup(swaggerDocument, swaggerOptions));
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, swaggerOptions)
+);
 
 // Start server
 const PORT = process.env.PORT || 8080;
