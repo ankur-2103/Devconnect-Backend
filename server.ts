@@ -100,6 +100,15 @@ mongoose
     console.error("Error connecting to MongoDB:", err);
   });
 
+// Swagger UI setup
+const swaggerOptions = {
+  customCss: ".swagger-ui .topbar { display: none }",
+  customSiteTitle: "DevConnect API Documentation",
+};
+
+app.use("/api-docs", swaggerUi.serve);
+app.get("/api-docs", swaggerUi.setup(swaggerDocument, swaggerOptions));
+
 // Start server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
@@ -108,13 +117,3 @@ app.listen(PORT, () => {
     `API Documentation available at http://localhost:${PORT}/api-docs`
   );
 });
-
-// Swagger UI setup
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument, {
-    customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "DevConnect API Documentation",
-  })
-);
