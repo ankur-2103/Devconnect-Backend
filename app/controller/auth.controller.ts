@@ -33,7 +33,7 @@ interface TokenPayload {
 }
 
 const signup = async (req: SignupRequest, res: Response): Promise<void> => {
-  try {
+  try { 
     const auth = new Auth({
       username: req.body.username,
       email: req.body.email,

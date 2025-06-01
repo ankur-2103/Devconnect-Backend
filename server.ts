@@ -8,6 +8,7 @@ import { Role as RoleModel } from './app/models/role.model';
 import db from './app/models';
 import authRoutes from './app/routes/auth.routes';
 import userRoutes from './app/routes/user.routes';
+import postRoutes from './app/routes/post.routes';
 import { RoleEnum } from './app/enums/role.enum';
 
 dotenv.config();
@@ -16,7 +17,16 @@ const app: Express = express();
 
 app.use(
   cors({
-    allowedHeaders: ["x-access-token", "Origin", "Content-Type", "Accept"],
+    origin: true, // Allow all origins in development
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'x-access-token',
+      'Authorization',
+      'Origin',
+      'Content-Type',
+      'Accept'
+    ],
   })
 );
 
@@ -72,6 +82,7 @@ async function initial(): Promise<void> {
 // Initialize routes
 authRoutes(app);
 userRoutes(app);
+postRoutes(app);
 
 const PORT: number = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 app.listen(PORT, () => {

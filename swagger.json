@@ -21,7 +21,7 @@
       "xAccessToken": {
         "type": "apiKey",
         "in": "header",
-        "name": "x-access-token",
+        "name": "authorization",
         "description": "JWT token for authentication"
       }
     },
@@ -29,22 +29,54 @@
       "User": {
         "type": "object",
         "properties": {
-          "username": {
-            "type": "string",
-            "description": "User's username"
+          "_id": {
+            "type": "string"
           },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "description": "User's email address"
+          "name": {
+            "type": "string"
+          },
+          "bio": {
+            "type": "string"
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "social": {
+            "type": "object",
+            "properties": {
+              "github": {
+                "type": "string"
+              },
+              "linkedin": {
+                "type": "string"
+              },
+              "twitter": {
+                "type": "string"
+              },
+              "website": {
+                "type": "string"
+              }
+            }
+          },
+          "avatar": {
+            "type": "string"
           },
           "roles": {
             "type": "array",
             "items": {
-              "type": "string",
-              "enum": ["user", "moderator", "admin"]
-            },
-            "description": "User's roles"
+              "type": "number"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -52,29 +84,94 @@
         "type": "object",
         "properties": {
           "username": {
-            "type": "string",
-            "description": "Username for login"
+            "type": "string"
           },
           "email": {
             "type": "string",
-            "format": "email",
-            "description": "User's email address"
+            "format": "email"
           },
           "password": {
             "type": "string",
-            "format": "password",
-            "description": "User's password"
+            "format": "password"
           },
           "roles": {
             "type": "array",
             "items": {
-              "type": "string",
-              "enum": ["user", "moderator", "admin"]
-            },
-            "description": "User's roles"
+              "type": "number"
+            }
           }
         },
         "required": ["username", "email", "password"]
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "object",
+            "properties": {
+              "_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "avatar": {
+                "type": "string"
+              }
+            }
+          },
+          "content": {
+            "type": "string"
+          },
+          "docUri": {
+            "type": "string"
+          },
+          "likes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaginatedResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "currentPage": {
+                "type": "number"
+              },
+              "totalPages": {
+                "type": "number"
+              },
+              "totalItems": {
+                "type": "number"
+              },
+              "hasMore": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -170,38 +267,160 @@
         }
       }
     },
-    "/api/user": {
+    "/api/user/me": {
       "get": {
         "tags": ["User"],
-        "summary": "User access endpoint",
-        "description": "Accessible to authenticated users",
+        "summary": "Get current user profile",
         "security": [
           {
-            "xAccessToken": []
+            "bearerAuth": []
           }
         ],
         "responses": {
           "200": {
-            "description": "User content",
+            "description": "User profile retrieved successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      },
+      "put": {
+        "tags": ["User"],
+        "summary": "Update current user profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "bio": {
+                    "type": "string"
+                  },
+                  "skills": {
+                    "type": "array",
+                    "items": {
                       "type": "string"
-                    },
-                    "user": {
-                      "type": "string"
-                    },
-                    "access": {
-                      "type": "string"
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
                     }
+                  },
+                  "social": {
+                    "type": "object",
+                    "properties": {
+                      "github": {
+                        "type": "string"
+                      },
+                      "linkedin": {
+                        "type": "string"
+                      },
+                      "twitter": {
+                        "type": "string"
+                      },
+                      "website": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "avatar": {
+                    "type": "string"
                   }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
+    },
+    "/api/posts": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get all posts",
+        "responses": {
+          "200": {
+            "description": "List of all posts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Post"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Create a new post",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "docUri": {
+                    "type": "string"
+                  }
+                },
+                "required": ["content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Post created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
                 }
               }
             }
@@ -211,6 +430,271 @@
           }
         }
       }
+    },
+    "/api/posts/feed": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get feed of posts from other users",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Number of items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feed retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/posts/user/me": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get current user's posts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Number of items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User posts retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get post by ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Posts"],
+        "summary": "Update post",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "docUri": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Post updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Not authorized to update this post"
+          },
+          "404": {
+            "description": "Post not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Delete post",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Not authorized to delete this post"
+          },
+          "404": {
+            "description": "Post not found"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}/like": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Like/Unlike post",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post like status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Post not found"
+          }
+        }
+      }
     }
   }
-} 
+}

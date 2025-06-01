@@ -1,5 +1,15 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
 
+
+export interface SearchUser {
+  _id: string;
+  name: string;
+  bio: string;
+  avatar: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface IUser extends Document {
   _id: Types.ObjectId;  // This will match auth._id
   name: string;

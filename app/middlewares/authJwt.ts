@@ -2,27 +2,26 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import db from "../models";
 import { Auth } from '../models/auth.model';
+import { DecodedToken } from '../models/common.model';
 
 const Role = db.role;
 
-interface DecodedToken {
-  id: string;
-  username: string;
-  email: string;
-  roles: string[];
-}
-
-interface AuthRequest extends Request {
-  metadata?: DecodedToken;
-}
-
-const verifyToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+const verifyToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const token = req.headers["x-access-token"] as string;
-    if (!token) {
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) {
       res.status(403).json({ message: "No token provided!" });
       return;
     }
+
+    // Check if the token is in the correct format
+    if (!authHeader.startsWith('Bearer ')) {
+      res.status(403).json({ message: "Invalid token format!" });
+      return;
+    }
+
+    // Extract the token from the Bearer string
+    const token = authHeader.split(' ')[1];
 
     const secret = process.env.SECERET;
     if (!secret) {
@@ -45,7 +44,7 @@ const verifyToken = async (req: AuthRequest, res: Response, next: NextFunction):
   }
 };
 
-const isAdmin = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+const isAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.metadata?.id) {
       res.status(401).json({ message: "User not authenticated" });
@@ -70,7 +69,7 @@ const isAdmin = async (req: AuthRequest, res: Response, next: NextFunction): Pro
   }
 };
 
-const isModerator = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+const isModerator = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.metadata?.id) {
       res.status(401).json({ message: "User not authenticated" });
