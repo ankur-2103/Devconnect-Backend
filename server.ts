@@ -106,9 +106,10 @@ const swaggerOptions = {
   customSiteTitle: "DevConnect API Documentation",
 };
 
+// Use ... to spread the array into individual handlers
 app.use(
   "/api-docs",
-  swaggerUi.serve,
+  ...swaggerUi.serve,
   swaggerUi.setup(swaggerDocument, swaggerOptions)
 );
 
