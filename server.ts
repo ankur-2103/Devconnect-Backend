@@ -58,52 +58,52 @@ mongoose
   .connect(MONGODB_URI)
   .then(async () => {
     console.log("Connected to MongoDB");
-    try {
-      const count = await Role.estimatedDocumentCount();
-      if (count === 0) {
-        const initialRoles: RoleData[] = [
-          { name: RoleEnum.user.name, enum: RoleEnum.user.enum },
-          { name: RoleEnum.moderator.name, enum: RoleEnum.moderator.enum },
-          { name: RoleEnum.admin.name, enum: RoleEnum.admin.enum },
-        ];
+    // try {
+    //   const count = await Role.estimatedDocumentCount();
+    //   if (count === 0) {
+    //     const initialRoles: RoleData[] = [
+    //       { name: RoleEnum.user.name, enum: RoleEnum.user.enum },
+    //       { name: RoleEnum.moderator.name, enum: RoleEnum.moderator.enum },
+    //       { name: RoleEnum.admin.name, enum: RoleEnum.admin.enum },
+    //     ];
 
-        await Promise.all(
-          initialRoles.map(async (role: RoleData) => {
-            const newRole = new Role(role);
-            await newRole.save();
-          })
-        );
-        console.log("Roles initialized successfully");
+    //     await Promise.all(
+    //       initialRoles.map(async (role: RoleData) => {
+    //         const newRole = new Role(role);
+    //         await newRole.save();
+    //       })
+    //     );
+    //     console.log("Roles initialized successfully");
 
-        // Create admin user if not exists
-        const adminExists = await Auth.findOne({ username: "admin" });
-        if (!adminExists) {
-          const adminAuth = new Auth({
-            username: "admin",
-            email: "admin@devconnect.com",
-            password: "admin123", // In production, use a secure password
-            roles: [RoleEnum.admin.enum],
-          });
-          await adminAuth.save();
+    //     // Create admin user if not exists
+    //     const adminExists = await Auth.findOne({ username: "admin" });
+    //     if (!adminExists) {
+    //       const adminAuth = new Auth({
+    //         username: "admin",
+    //         email: "admin@devconnect.com",
+    //         password: "admin123", // In production, use a secure password
+    //         roles: [RoleEnum.admin.enum],
+    //       });
+    //       await adminAuth.save();
 
-          const adminUser = new User({
-            _id: adminAuth._id,
-            name: "Admin",
-            bio: "System Administrator",
-            skills: ["Administration", "System Management"],
-            social: {
-              github: "https://github.com/admin",
-              linkedin: "https://linkedin.com/in/admin",
-            },
-            avatar: "https://via.placeholder.com/150",
-          });
-          await adminUser.save();
-          console.log("Admin user created successfully");
-        }
-      }
-    } catch (err) {
-      console.error("Error initializing roles:", err);
-    }
+    //       const adminUser = new User({
+    //         _id: adminAuth._id,
+    //         name: "Admin",
+    //         bio: "System Administrator",
+    //         skills: ["Administration", "System Management"],
+    //         social: {
+    //           github: "https://github.com/admin",
+    //           linkedin: "https://linkedin.com/in/admin",
+    //         },
+    //         avatar: "https://via.placeholder.com/150",
+    //       });
+    //       await adminUser.save();
+    //       console.log("Admin user created successfully");
+    //     }
+    //   }
+    // } catch (err) {
+    //   console.error("Error initializing roles:", err);
+    // }
   })
   .catch((err) => {
     console.error("Error connecting to MongoDB:", err);
