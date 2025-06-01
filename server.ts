@@ -2,7 +2,9 @@ import express, { Application, Request, Response, NextFunction } from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import { config } from "dotenv";
-import { Role, IRole } from "./app/models/role.model"
+import swaggerUi from "swagger-ui-express";
+import swaggerDocument from "./swagger.json";
+import { Role, IRole } from "./app/models/role.model";
 import { Auth } from "./app/models/auth.model";
 import { User } from "./app/models/user.model";
 import { RoleEnum } from "./app/enums/role.enum";
@@ -23,6 +25,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Swagger UI setup
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "DevConnect API Documentation",
+  })
+);
+
 // Routes
 import authRoutes from "./app/routes/auth.routes";
 import userRoutes from "./app/routes/user.routes";
@@ -40,7 +52,8 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/devconnect";
+const MONGODB_URI = `mongodb+srv://ankurvasta123:${process.env.PASSWORD}@cluster0.1f6xg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+
 mongoose
   .connect(MONGODB_URI)
   .then(async () => {
@@ -51,7 +64,7 @@ mongoose
         const initialRoles: RoleData[] = [
           { name: RoleEnum.user.name, enum: RoleEnum.user.enum },
           { name: RoleEnum.moderator.name, enum: RoleEnum.moderator.enum },
-          { name: RoleEnum.admin.name, enum: RoleEnum.admin.enum }
+          { name: RoleEnum.admin.name, enum: RoleEnum.admin.enum },
         ];
 
         await Promise.all(
@@ -100,4 +113,7 @@ mongoose
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(
+    `API Documentation available at http://localhost:${PORT}/api-docs`
+  );
 });
