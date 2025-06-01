@@ -107,11 +107,11 @@ const swaggerOptions = {
 };
 
 // Use ... to spread the array into individual handlers
-app.use(
-  "/api-docs",
-  ...swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument, swaggerOptions)
-);
+// app.use(
+//   "/api-docs",
+//   ...swaggerUi.serve,
+//   swaggerUi.setup(swaggerDocument, swaggerOptions)
+// );
 
 // Start server
 const PORT = process.env.PORT || 8080;
