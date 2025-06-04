@@ -1,122 +1,98 @@
-import express, { Application, Request, Response, NextFunction } from "express";
+import express, { Express } from "express";
 import cors from "cors";
-import mongoose from "mongoose";
-import { config } from "dotenv";
+import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "./swagger.json";
-import { Role, IRole } from "./app/models/role.model";
-import { Auth } from "./app/models/auth.model";
-import { User } from "./app/models/user.model";
+import mongoose from "mongoose";
+import { Role as RoleModel } from "./app/models/role.model";
+import db from "./app/models";
+import authRoutes from "./app/routes/auth.routes";
+import userRoutes from "./app/routes/user.routes";
 import { RoleEnum } from "./app/enums/role.enum";
-import { authJwt } from "./app/middlewares";
-import { RequestHandler } from "express";
+import postRoutes from "./app/routes/post.routes";
 
-interface RoleData {
-  name: string;
-  enum: number;
-}
+dotenv.config();
 
-config();
+const app: Express = express();
 
-const app: Application = express();
+app.use(
+  cors({
+    origin: true, // Allow all origins in developmentAdd commentMore actions
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "x-access-token",
+      "Authorization",
+      "Origin",
+      "Content-Type",
+      "Accept",
+    ],
+  })
+);
 
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-import authRoutes from "./app/routes/auth.routes";
-import userRoutes from "./app/routes/user.routes";
-import postRoutes from "./app/routes/post.routes";
+// Swagger UI setup
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "DevConnect API Documentation",
+  })
+);
 
-// Apply routes
-app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/posts", postRoutes);
-
-// Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).send("Something broke!");
-});
-
-// Connect to MongoDB
-const MONGODB_URI = `mongodb+srv://ankurvasta123:${process.env.PASSWORD}@cluster0.1f6xg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
+// Database connection
 mongoose
   .connect(
     `mongodb+srv://ankurvasta123:${process.env.PASSWORD}@cluster0.1f6xg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
   )
-  .then(async () => {
-    console.log("Connected to MongoDB");
-    // try {
-    //   const count = await Role.estimatedDocumentCount();
-    //   if (count === 0) {
-    //     const initialRoles: RoleData[] = [
-    //       { name: RoleEnum.user.name, enum: RoleEnum.user.enum },
-    //       { name: RoleEnum.moderator.name, enum: RoleEnum.moderator.enum },
-    //       { name: RoleEnum.admin.name, enum: RoleEnum.admin.enum },
-    //     ];
-
-    //     await Promise.all(
-    //       initialRoles.map(async (role: RoleData) => {
-    //         const newRole = new Role(role);
-    //         await newRole.save();
-    //       })
-    //     );
-    //     console.log("Roles initialized successfully");
-
-    //     // Create admin user if not exists
-    //     const adminExists = await Auth.findOne({ username: "admin" });
-    //     if (!adminExists) {
-    //       const adminAuth = new Auth({
-    //         username: "admin",
-    //         email: "admin@devconnect.com",
-    //         password: "admin123", // In production, use a secure password
-    //         roles: [RoleEnum.admin.enum],
-    //       });
-    //       await adminAuth.save();
-
-    //       const adminUser = new User({
-    //         _id: adminAuth._id,
-    //         name: "Admin",
-    //         bio: "System Administrator",
-    //         skills: ["Administration", "System Management"],
-    //         social: {
-    //           github: "https://github.com/admin",
-    //           linkedin: "https://linkedin.com/in/admin",
-    //         },
-    //         avatar: "https://via.placeholder.com/150",
-    //       });
-    //       await adminUser.save();
-    //       console.log("Admin user created successfully");
-    //     }
-    //   }
-    // } catch (err) {
-    //   console.error("Error initializing roles:", err);
-    // }
+  .then(() => {
+    console.log("Successfully connect to MongoDB.");
+    initial();
   })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
+  .catch((err: Error) => {
+    console.error("Connection error", err);
+    process.exit();
   });
 
-// Swagger UI setup
-const swaggerOptions = {
-  customCss: ".swagger-ui .topbar { display: none }",
-  customSiteTitle: "DevConnect API Documentation",
-};
+async function initial(): Promise<void> {
+  try {
+    const count = await RoleModel.estimatedDocumentCount();
 
-// Use ... to spread the array into individual handlers
-// app.use(
-//   "/api-docs",
-//   ...swaggerUi.serve,
-//   swaggerUi.setup(swaggerDocument, swaggerOptions)
-// );
+    if (count === 0) {
+      await new RoleModel({
+        name: RoleEnum.user.name,
+        enum: RoleEnum.user.enum,
+      }).save();
+      console.log(`added '${RoleEnum.user.name}' to roles collection`);
 
-// Start server
-const PORT = process.env.PORT || 8080;
+      await new RoleModel({
+        name: RoleEnum.moderator.name,
+        enum: RoleEnum.moderator.enum,
+      }).save();
+      console.log(`added '${RoleEnum.moderator.name}' to roles collection`);
+
+      await new RoleModel({
+        name: RoleEnum.admin.name,
+        enum: RoleEnum.admin.enum,
+      }).save();
+      console.log(`added '${RoleEnum.admin.name}' to roles collection`);
+    }
+  } catch (err) {
+    console.error("Error initializing roles:", err);
+  }
+}
+
+// Initialize routes
+authRoutes(app);
+userRoutes(app);
+postRoutes(app);
+
+const PORT: number = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}.`);
   console.log(
     `API Documentation available at http://localhost:${PORT}/api-docs`
   );
