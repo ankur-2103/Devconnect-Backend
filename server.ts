@@ -10,6 +10,7 @@ import authRoutes from "./app/routes/auth.routes";
 import userRoutes from "./app/routes/user.routes";
 import { RoleEnum } from "./app/enums/role.enum";
 import postRoutes from "./app/routes/post.routes";
+import uploadRoutes from "./app/routes/upload.routes";
 
 dotenv.config();
 
@@ -89,6 +90,7 @@ async function initial(): Promise<void> {
 authRoutes(app);
 userRoutes(app);
 postRoutes(app);
+uploadRoutes(app);
 
 const PORT: number = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 app.listen(PORT, () => {
