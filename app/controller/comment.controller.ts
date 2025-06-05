@@ -2,11 +2,16 @@ import { Request, Response } from "express";
 import { Comment, IComment } from "../models/comment.model";
 import { Types } from "mongoose";
 import { RoleEnum } from "../enums/role.enum";
+import { PaginatedResponse } from "../models/common.model";
 
 interface CommentRequest extends Request {
   body: {
     content: string;
     postId: string;
+  };
+  query: {
+    page?: string;
+    limit?: string;
   };
 }
 
@@ -52,26 +57,47 @@ const createComment = async (
 
 // Get all comments for a specific post
 const getCommentsByPostId = async (
-  req: Request,
+  req: CommentRequest,
   res: Response
 ): Promise<void> => {
   try {
     const { postId } = req.params;
+    const page = parseInt(req.query.page || "1");
+    const limit = parseInt(req.query.limit || "10");
+    const skip = (page - 1) * limit;
 
     if (!Types.ObjectId.isValid(postId)) {
       res.status(400).send({ message: "Invalid postId" });
       return;
     }
 
-    const comments = await Comment.find({ postId })
-      .sort({ createdAt: -1 })
-      .populate({
-        path: "userId",
-        select: "name avatar",
-        model: "User",
-      });
+    const [comments, total] = await Promise.all([
+      Comment.find({ postId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate({
+          path: "userId",
+          select: "name avatar",
+          model: "User",
+        })
+        .lean(),
+      Comment.countDocuments({ postId }),
+    ]);
 
-    res.status(200).send(comments);
+    const hasMore = skip + comments.length < total;
+
+    const response: PaginatedResponse<IComment> = {
+      items: comments,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        hasMore,
+      },
+    };
+
+    res.status(200).send(response);
   } catch (err) {
     res.status(500).send({
       message: err instanceof Error ? err.message : "An error occurred",
