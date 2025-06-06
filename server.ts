@@ -2,7 +2,7 @@ import express, { Express, RequestHandler } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
-import swaggerDocument from "./swagger.json";
+const swaggerDocument = require('./swagger.json');
 import mongoose from "mongoose";
 import { Role as RoleModel } from "./app/models/role.model";
 import db from "./app/models";
@@ -10,6 +10,8 @@ import authRoutes from "./app/routes/auth.routes";
 import userRoutes from "./app/routes/user.routes";
 import { RoleEnum } from "./app/enums/role.enum";
 import postRoutes from "./app/routes/post.routes";
+import uploadRoutes from "./app/routes/upload.routes";
+import commentRoutes from "./app/routes/comment.routes";
 
 dotenv.config();
 
@@ -42,6 +44,9 @@ app.use(
     customSiteTitle: "DevConnect API Documentation",
   })
 );
+
+
+
 
 // Database connection
 mongoose
@@ -89,6 +94,8 @@ async function initial(): Promise<void> {
 authRoutes(app);
 userRoutes(app);
 postRoutes(app);
+commentRoutes(app);
+uploadRoutes(app);
 
 const PORT: number = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 app.listen(PORT, () => {

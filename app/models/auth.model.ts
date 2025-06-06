@@ -11,7 +11,7 @@ export interface AuthUser {
   _id: string; // This will match auth._id
   name: string;
   bio: string;
-  skills: string[];
+  skills: string;
   social: {
     github: string;
     linkedin: string;
