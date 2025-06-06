@@ -2,7 +2,7 @@ import express, { Express, RequestHandler } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
-const swaggerDocument = require('./swagger.json');
+const swaggerDocument = require("./swagger.json");
 import mongoose from "mongoose";
 import { Role as RoleModel } from "./app/models/role.model";
 import db from "./app/models";
@@ -12,6 +12,7 @@ import { RoleEnum } from "./app/enums/role.enum";
 import postRoutes from "./app/routes/post.routes";
 import uploadRoutes from "./app/routes/upload.routes";
 import commentRoutes from "./app/routes/comment.routes";
+import ServerlessHttp from "serverless-http/serverless-http";
 
 dotenv.config();
 
@@ -44,9 +45,6 @@ app.use(
     customSiteTitle: "DevConnect API Documentation",
   })
 );
-
-
-
 
 // Database connection
 mongoose
@@ -96,6 +94,8 @@ userRoutes(app);
 postRoutes(app);
 commentRoutes(app);
 uploadRoutes(app);
+
+export const handler = ServerlessHttp(app);
 
 const PORT: number = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 app.listen(PORT, () => {
