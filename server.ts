@@ -36,15 +36,22 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
+app.get("/api-docs/swagger.json", (req, res) => {
+  res.json(swaggerDocument);
+});
+
 // Swagger UI setup
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument, {
-    customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "DevConnect API Documentation",
-  })
-);
+// app.use(
+//   "/api-docs",
+//   swaggerUi.serve,
+//   swaggerUi.setup(swaggerDocument, {
+//     customCss: ".swagger-ui .topbar { display: none }",
+//     customSiteTitle: "DevConnect API Documentation",
+//   })
+// );
+
+
 
 // Database connection
 mongoose
