@@ -39,7 +39,7 @@ app.use(express.urlencoded({ extended: true }));
 // Swagger UI setup
 app.use(
   "/api-docs",
-  swaggerUi.serve as unknown as RequestHandler,
+  swaggerUi.serve,
   swaggerUi.setup(swaggerDocument, {
     customCss: ".swagger-ui .topbar { display: none }",
     customSiteTitle: "DevConnect API Documentation",
