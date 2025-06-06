@@ -49,7 +49,10 @@ app.use(
 // Database connection
 mongoose
   .connect(
-    `mongodb+srv://ankurvasta123:${process.env.PASSWORD}@cluster0.1f6xg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+    `mongodb+srv://ankurvasta123:${process.env.PASSWORD}@cluster0.1f6xg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`,
+    {
+      serverSelectionTimeoutMS: 10000,
+    }
   )
   .then(() => {
     console.log("Successfully connect to MongoDB.");
