@@ -1,6 +1,10 @@
 import { Express } from "express";
 import { authJwt } from "../middlewares";
 import controller from "../controller/post.controller";
+import multer from 'multer';
+
+// Configure multer for memory storage
+const upload = multer({ storage: multer.memoryStorage() });
 
 export default function(app: Express): void {
   // Public routes
@@ -12,9 +16,9 @@ export default function(app: Express): void {
   app.get("/api/posts/user/:userId", [authJwt.verifyToken], controller.getUserPosts);
   
   // Protected routes with parameters
-  app.post("/api/posts", [authJwt.verifyToken], controller.createPost);
+  app.post("/api/posts", [authJwt.verifyToken, upload.single('file')], controller.createPost);
   app.get("/api/posts/:id", [authJwt.verifyToken], controller.getPostById);
-  app.put("/api/posts/:id", [authJwt.verifyToken], controller.updatePost);
+  app.put("/api/posts/:id", [authJwt.verifyToken, upload.single('file')], controller.updatePost);
   app.delete("/api/posts/:id", [authJwt.verifyToken], controller.deletePost);
   app.post("/api/posts/:id/like", [authJwt.verifyToken], controller.toggleLike);
 }

@@ -4,6 +4,7 @@ import { AuthUser } from "../models/auth.model";
 import { Types } from "mongoose";
 import { PaginatedResponse } from "../models/common.model";
 import { SearchUser } from "../models/user.model";
+import supabase from "../../supabase";
 
 const userMe = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -22,38 +23,64 @@ const userMe = async (req: Request, res: Response): Promise<void> => {
         github: user.social.github,
         linkedin: user.social.linkedin,
         twitter: user.social.twitter,
-        website: user.social.website
+        website: user.social.website,
       },
       avatar: user.avatar,
       roles: req.metadata?.roles || [],
       createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString()
+      updatedAt: user.updatedAt.toISOString(),
     };
 
     res.status(200).json(authUser);
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).json({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
 };
 
 const updateMe = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.metadata!.id;
+    const formData = req.body;
+    console.log("🚀 ~ updateMe ~ formData:", formData);
+    const file = req.file;
+    console.log("🚀 ~ updateMe ~ file:", file);
+
+    let avatarUrl = formData.avatar;
+
+    // If there's a file in the form data, upload it to Supabase
+    if (file) {
+      const fileName = `${Date.now()}-${file.originalname}`;
+      const bucket = process.env.SUPABASE_BUCKET as string;
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      const { data: publicUrl } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+
+      avatarUrl = publicUrl.publicUrl;
+    }
+
     const updateData = {
-      name: req.body.name,
-      bio: req.body.bio,
-      skills: req.body.skills,
+      name: formData.name,
+      bio: formData.bio,
+      skills: formData.skills,
       social: {
-        github: req.body.social?.github,
-        linkedin: req.body.social?.linkedin,
-        twitter: req.body.social?.twitter,
-        website: req.body.social?.website,
+        github: formData.social?.github,
+        linkedin: formData.social?.linkedin,
+        twitter: formData.social?.twitter,
+        website: formData.social?.website,
       },
-      avatar: req.body.avatar,
+      avatar: avatarUrl,
     };
 
     // Remove undefined fields
@@ -74,30 +101,71 @@ const updateMe = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    res.status(200).json(user);
+    const response = {
+      _id: user._id,
+      name: user.name,
+      bio: user.bio,
+      skills: user.skills,
+      social: {
+        github: user.social.github,
+        linkedin: user.social.linkedin,
+        twitter: user.social.twitter,
+        website: user.social.website,
+      },
+      avatar: user.avatar,
+      roles: req.metadata?.roles || [],
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    };
+
+    res.status(200).json(response);
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).json({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
 };
 
 const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.body._id;
+    const formData = req.body;
+    const file = formData.file;
+
+    let avatarUrl = formData.avatar;
+
+    // If there's a file in the form data, upload it to Supabase
+    if (file) {
+      const fileName = `${Date.now()}-${file.originalname}`;
+      const bucket = process.env.SUPABASE_BUCKET as string;
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      const { data: publicUrl } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+
+      avatarUrl = publicUrl.publicUrl;
+    }
+
     const updateData = {
-      name: req.body.name,
-      bio: req.body.bio,
-      skills: req.body.skills,
+      name: formData.name,
+      bio: formData.bio,
+      skills: formData.skills,
       social: {
-        github: req.body.social?.github,
-        linkedin: req.body.social?.linkedin,
-        twitter: req.body.social?.twitter,
-        website: req.body.social?.website,
+        github: formData.social?.github,
+        linkedin: formData.social?.linkedin,
+        twitter: formData.social?.twitter,
+        website: formData.social?.website,
       },
-      avatar: req.body.avatar,
+      avatar: avatarUrl,
     };
 
     // Remove undefined fields
@@ -118,15 +186,29 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    res.status(200).json(user);
+    const response = {
+      _id: user._id,
+      name: user.name,
+      bio: user.bio,
+      skills: user.skills,
+      social: {
+        github: user.social.github,
+        linkedin: user.social.linkedin,
+        twitter: user.social.twitter,
+        website: user.social.website,
+      },
+      avatar: user.avatar,
+      roles: req.metadata?.roles || [],
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    };
+
+    res.status(200).json(response);
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).json({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
-  return;
 };
 
 const searchUsers = async (req: Request, res: Response): Promise<void> => {
@@ -143,13 +225,13 @@ const searchUsers = async (req: Request, res: Response): Promise<void> => {
 
     // Create search conditions
     const searchConditions = {
-      _id: { $ne: new Types.ObjectId(req.metadata.id as string || '') }, // Exclude current user
-      name: { $ne: '' }, // Exclude users with empty names
+      _id: { $ne: new Types.ObjectId((req.metadata.id as string) || "") }, // Exclude current user
+      name: { $ne: "" }, // Exclude users with empty names
       $or: [
         { name: { $regex: searchQuery, $options: "i" } },
         { bio: { $regex: searchQuery, $options: "i" } },
-        { skills: { $regex: searchQuery, $options: "i" } }
-      ]
+        { skills: { $regex: searchQuery, $options: "i" } },
+      ],
     };
 
     const [users, total] = await Promise.all([
@@ -158,32 +240,32 @@ const searchUsers = async (req: Request, res: Response): Promise<void> => {
         .skip(skip)
         .limit(limit)
         .lean(),
-      User.countDocuments(searchConditions)
+      User.countDocuments(searchConditions),
     ]);
 
     const hasMore = skip + users.length < total;
 
     const response: PaginatedResponse<SearchUser> = {
-      items: users.map(user => ({
+      items: users.map((user) => ({
         _id: user._id.toString(),
         name: user.name,
         bio: user.bio,
         avatar: user.avatar,
         createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString()
+        updatedAt: user.updatedAt.toISOString(),
       })),
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(total / limit),
         totalItems: total,
-        hasMore
-      }
+        hasMore,
+      },
     };
 
     res.status(200).json(response);
   } catch (err) {
     res.status(500).json({
-      message: err instanceof Error ? err.message : "An error occurred"
+      message: err instanceof Error ? err.message : "An error occurred",
     });
   }
 };
@@ -205,18 +287,18 @@ const getUserById = async (req: Request, res: Response): Promise<void> => {
         github: user.social.github,
         linkedin: user.social.linkedin,
         twitter: user.social.twitter,
-        website: user.social.website
+        website: user.social.website,
       },
       avatar: user.avatar,
       roles: [], //x We don't include roles in public profile
       createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString()
+      updatedAt: user.updatedAt.toISOString(),
     };
 
     res.status(200).json(authUser);
   } catch (err) {
     res.status(500).json({
-      message: err instanceof Error ? err.message : "An error occurred"
+      message: err instanceof Error ? err.message : "An error occurred",
     });
   }
 };
@@ -226,5 +308,5 @@ export default {
   updateMe,
   updateUser,
   searchUsers,
-  getUserById
+  getUserById,
 };

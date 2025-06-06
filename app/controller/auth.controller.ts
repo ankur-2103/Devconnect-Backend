@@ -48,7 +48,7 @@ const signup = async (req: SignupRequest, res: Response): Promise<void> => {
       _id: auth._id,
       name: '',
       bio: '',
-      skills: [],
+      skills: '',
       social: {
         github: '',
         linkedin: '',

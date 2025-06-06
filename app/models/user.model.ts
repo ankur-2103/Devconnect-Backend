@@ -1,5 +1,4 @@
-import mongoose, { Document, Schema, Types } from 'mongoose';
-
+import mongoose, { Document, Schema, Types } from "mongoose";
 
 export interface SearchUser {
   _id: string;
@@ -11,10 +10,10 @@ export interface SearchUser {
 }
 
 export interface IUser extends Document {
-  _id: Types.ObjectId;  // This will match auth._id
+  _id: Types.ObjectId; // This will match auth._id
   name: string;
   bio: string;
-  skills: string[];
+  skills: string;
   social: {
     github: string;
     linkedin: string;
@@ -26,33 +25,36 @@ export interface IUser extends Document {
   updatedAt: Date;
 }
 
-const UserSchema: Schema = new Schema({
-  _id: { type: Schema.Types.ObjectId, required: true },  // This will be set to match auth._id
-  name: { type: String, default: '' },
-  bio: { type: String, default: '' },
-  skills: [{ type: String }],
-  social: {
-    github: { type: String, default: '' },
-    linkedin: { type: String, default: '' },
-    twitter: { type: String, default: '' },
-    website: { type: String, default: '' }
+const UserSchema: Schema = new Schema(
+  {
+    _id: { type: Schema.Types.ObjectId, required: true }, // This will be set to match auth._id
+    name: { type: String, default: "" },
+    bio: { type: String, default: "" },
+    skills: { type: String, default: "" },
+    social: {
+      github: { type: String, default: "" },
+      linkedin: { type: String, default: "" },
+      twitter: { type: String, default: "" },
+      website: { type: String, default: "" },
+    },
+    avatar: { type: String, default: "" },
   },
-  avatar: { type: String, default: '' }
-}, {
-  timestamps: true // This will automatically add createdAt and updatedAt fields
-});
+  {
+    timestamps: true, // This will automatically add createdAt and updatedAt fields
+  }
+);
 
 // Add a pre-save middleware to ensure _id matches auth._id
-UserSchema.pre('save', async function(next) {
+UserSchema.pre("save", async function (next) {
   if (!this.isNew) {
     return next();
   }
-  
+
   try {
-    const Auth = mongoose.model('Auth');
+    const Auth = mongoose.model("Auth");
     const auth = await Auth.findById(this._id);
     if (!auth) {
-      throw new Error('Auth document must exist before creating User');
+      throw new Error("Auth document must exist before creating User");
     }
     next();
   } catch (error: any) {
@@ -60,4 +62,4 @@ UserSchema.pre('save', async function(next) {
   }
 });
 
-export const User = mongoose.model<IUser>('User', UserSchema); 
+export const User = mongoose.model<IUser>("User", UserSchema);

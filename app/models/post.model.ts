@@ -9,7 +9,7 @@ export interface IPost extends Document {
 
 const PostSchema: Schema = new Schema(
   {
-    userId: { type: Types.ObjectId, required: true },
+    userId: { type: Types.ObjectId, required: true, ref: 'User' },
     content: { type: String, required: true },
     docUri: { type: String, required: false, default: "" },
     likes: [{ type: Types.ObjectId }],
