@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Post, IPost } from "../models/post.model";
 import { Types } from "mongoose";
 import { RoleEnum } from "../enums/role.enum";
+import supabase from '../../supabase';
 import {
   PaginatedResponse as SharedPaginatedResponse,
   DecodedToken,
@@ -17,72 +18,213 @@ interface PostRequest extends Request {
     page?: string;
     limit?: string;
   };
+  file?: Express.Multer.File;
 }
 
 // Create a new post
 const createPost = async (req: PostRequest, res: Response): Promise<void> => {
   try {
+    const formData = req.body;
+    const file = req.file;
+    let docUri = formData.docUri || "";
+
+    // If there's a file in the form data, upload it to Supabase
+    if (file) {
+      const fileName = `${Date.now()}-${file.originalname}`;
+      const bucket = process.env.SUPABASE_BUCKET as string;
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      const { data: publicUrl } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+
+      docUri = publicUrl.publicUrl;
+    }
+
     const post = new Post({
       userId: new Types.ObjectId(req.metadata?.id),
-      content: req.body.content,
-      docUri: req.body.docUri || "",
+      content: formData.content,
+      docUri,
     });
 
     await post.save();
-    const populatedPost = await Post.findById(post._id).populate({
-      path: "userId",
-      select: "name avatar",
-      model: "User",
-    });
-    res.status(201).send(populatedPost);
+
+    const populatedPost = await Post.aggregate([
+      {
+        $match: {
+          _id: post._id
+        }
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'postId',
+          as: 'comments'
+        }
+      },
+      {
+        $addFields: {
+          commentsCount: { $size: '$comments' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          docUri: 1,
+          likes: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          commentsCount: 1,
+          'user._id': 1,
+          'user.name': 1,
+          'user.avatar': 1
+        }
+      }
+    ]);
+
+    res.status(201).send(populatedPost[0]);
   } catch (err) {
-    res
-      .status(500)
-      .send({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).send({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
 };
 
 // Get all posts
 const getAllPosts = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const posts = await Post.find()
-      .sort({ createdAt: -1 })
-      .populate({
-        path: "userId",
-        select: "name avatar",
-        model: "User",
-      });
+    const posts = await Post.aggregate([
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'postId',
+          as: 'comments'
+        }
+      },
+      {
+        $addFields: {
+          commentsCount: { $size: '$comments' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          docUri: 1,
+          likes: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          commentsCount: 1,
+          'user._id': 1,
+          'user.name': 1,
+          'user.avatar': 1
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      }
+    ]);
+
     res.status(200).send(posts);
   } catch (err) {
-    res
-      .status(500)
-      .send({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).send({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
 };
 
 // Get post by ID
 const getPostById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const post = await Post.findById(req.params.id).populate({
-      path: "userId",
-      select: "name avatar",
-      model: "User",
-    });
-    if (!post) {
+    const post = await Post.aggregate([
+      {
+        $match: {
+          _id: new Types.ObjectId(req.params.id)
+        }
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'postId',
+          as: 'comments'
+        }
+      },
+      {
+        $addFields: {
+          commentsCount: { $size: '$comments' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          docUri: 1,
+          likes: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          commentsCount: 1,
+          'user._id': 1,
+          'user.name': 1,
+          'user.avatar': 1
+        }
+      }
+    ]);
+
+    if (!post[0]) {
       res.status(404).send({ message: "Post not found" });
       return;
     }
-    res.status(200).send(post);
+
+    res.status(200).send(post[0]);
   } catch (err) {
-    res
-      .status(500)
-      .send({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).send({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
 };
 
@@ -102,25 +244,96 @@ const updatePost = async (req: PostRequest, res: Response): Promise<void> => {
       return;
     }
 
+    const formData = req.body;
+    const file = req.file;
+    let docUri = formData.docUri || post.docUri;
+
+    // If there's a file in the form data, upload it to Supabase
+    if (file) {
+      const fileName = `${Date.now()}-${file.originalname}`;
+      const bucket = process.env.SUPABASE_BUCKET as string;
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      const { data: publicUrl } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+
+      docUri = publicUrl.publicUrl;
+    }
+
     const updatedPost = await Post.findByIdAndUpdate(
       req.params.id,
       { 
-        content: req.body.content,
-        docUri: req.body.docUri || post.docUri,
+        content: formData.content,
+        docUri,
       },
       { new: true }
-    ).populate({
-      path: "userId",
-      select: "name avatar",
-      model: "User",
-    });
-    res.status(200).send(updatedPost);
+    );
+
+    if (!updatedPost) {
+      res.status(404).send({ message: "Post not found" });
+      return;
+    }
+
+    const populatedPost = await Post.aggregate([
+      {
+        $match: {
+          _id: updatedPost._id
+        }
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'postId',
+          as: 'comments'
+        }
+      },
+      {
+        $addFields: {
+          commentsCount: { $size: '$comments' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          docUri: 1,
+          likes: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          commentsCount: 1,
+          'user._id': 1,
+          'user.name': 1,
+          'user.avatar': 1
+        }
+      }
+    ]);
+
+    res.status(200).send(populatedPost[0]);
   } catch (err) {
-    res
-      .status(500)
-      .send({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).send({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
 };
 
@@ -172,12 +385,54 @@ const toggleLike = async (req: PostRequest, res: Response): Promise<void> => {
     }
 
     await post.save();
-    const updatedPost = await Post.findById(post._id).populate({
-      path: "userId",
-      select: "name avatar",
-      model: "User",
-    });
-    res.status(200).send(updatedPost);
+
+    const updatedPost = await Post.aggregate([
+      {
+        $match: {
+          _id: post._id
+        }
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'postId',
+          as: 'comments'
+        }
+      },
+      {
+        $addFields: {
+          commentsCount: { $size: '$comments' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          docUri: 1,
+          likes: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          commentsCount: 1,
+          'user._id': 1,
+          'user.name': 1,
+          'user.avatar': 1
+        }
+      }
+    ]);
+
+    res.status(200).send(updatedPost[0]);
   } catch (err) {
     res
       .status(500)
@@ -203,17 +458,59 @@ const getUserPosts = async (req: PostRequest, res: Response): Promise<void> => {
     const userId = new Types.ObjectId(req.params.userId || req.metadata.id);
 
     const [posts, total] = await Promise.all([
-      Post.find({ userId })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate({
-          path: "userId",
-          select: "name avatar",
-          model: "User",
-        })
-        .lean(),
-      Post.countDocuments({ userId }),
+      Post.aggregate([
+        {
+          $match: { userId }
+        },
+        {
+          $lookup: {
+            from: 'comments',
+            localField: '_id',
+            foreignField: 'postId',
+            as: 'comments'
+          }
+        },
+        {
+          $addFields: {
+            commentsCount: { $size: '$comments' }
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        },
+        {
+          $project: {
+            _id: 1,
+            content: 1,
+            docUri: 1,
+            likes: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            commentsCount: 1,
+            'user._id': 1,
+            'user.name': 1,
+            'user.avatar': 1
+          }
+        },
+        {
+          $sort: { createdAt: -1 }
+        },
+        {
+          $skip: skip
+        },
+        {
+          $limit: limit
+        }
+      ]),
+      Post.countDocuments({ userId })
     ]);
 
     const hasMore = skip + posts.length < total;
@@ -230,11 +527,9 @@ const getUserPosts = async (req: PostRequest, res: Response): Promise<void> => {
 
     res.status(200).send(response);
   } catch (err) {
-    res
-      .status(500)
-      .send({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).send({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
 };
 
@@ -253,17 +548,59 @@ const getFeed = async (req: PostRequest, res: Response): Promise<void> => {
     const userId = new Types.ObjectId(req.metadata.id);
     
     const [posts, total] = await Promise.all([
-      Post.find({ userId: { $ne: userId } })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate({
-          path: "userId",
-          select: "name avatar",
-          model: "User",
-        })
-        .lean(),
-      Post.countDocuments({ userId: { $ne: userId } }),
+      Post.aggregate([
+        {
+          $match: { userId: { $ne: userId } }
+        },
+        {
+          $lookup: {
+            from: 'comments',
+            localField: '_id',
+            foreignField: 'postId',
+            as: 'comments'
+          }
+        },
+        {
+          $addFields: {
+            commentsCount: { $size: '$comments' }
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        },
+        {
+          $project: {
+            _id: 1,
+            content: 1,
+            docUri: 1,
+            likes: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            commentsCount: 1,
+            'user._id': 1,
+            'user.name': 1,
+            'user.avatar': 1
+          }
+        },
+        {
+          $sort: { createdAt: -1 }
+        },
+        {
+          $skip: skip
+        },
+        {
+          $limit: limit
+        }
+      ]),
+      Post.countDocuments({ userId: { $ne: userId } })
     ]);
 
     const hasMore = skip + posts.length < total;
@@ -281,11 +618,9 @@ const getFeed = async (req: PostRequest, res: Response): Promise<void> => {
     res.status(200).send(response);
   } catch (err) {
     console.error("Error in getFeed:", err);
-    res
-      .status(500)
-      .send({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).send({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
 };
 

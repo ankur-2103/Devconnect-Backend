@@ -41,13 +41,38 @@ const createComment = async (
 
     await comment.save();
 
-    const populatedComment = await Comment.findById(comment._id).populate({
-      path: "userId",
-      select: "name avatar",
-      model: "User",
-    });
+    const populatedComment = await Comment.aggregate([
+      {
+        $match: {
+          _id: comment._id
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          postId: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          'user._id': 1,
+          'user.name': 1,
+          'user.avatar': 1
+        }
+      }
+    ]);
 
-    res.status(201).send(populatedComment);
+    res.status(201).send(populatedComment[0]);
   } catch (err) {
     res.status(500).send({
       message: err instanceof Error ? err.message : "An error occurred",
@@ -72,17 +97,44 @@ const getCommentsByPostId = async (
     }
 
     const [comments, total] = await Promise.all([
-      Comment.find({ postId })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate({
-          path: "userId",
-          select: "name avatar",
-          model: "User",
-        })
-        .lean(),
-      Comment.countDocuments({ postId }),
+      Comment.aggregate([
+        {
+          $match: { postId: new Types.ObjectId(postId) }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        },
+        {
+          $project: {
+            _id: 1,
+            content: 1,
+            postId: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            'user._id': 1,
+            'user.name': 1,
+            'user.avatar': 1
+          }
+        },
+        {
+          $sort: { createdAt: -1 }
+        },
+        {
+          $skip: skip
+        },
+        {
+          $limit: limit
+        }
+      ]),
+      Comment.countDocuments({ postId })
     ]);
 
     const hasMore = skip + comments.length < total;
@@ -108,18 +160,43 @@ const getCommentsByPostId = async (
 // Get a comment by ID
 const getCommentById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const comment = await Comment.findById(req.params.id).populate({
-      path: "userId",
-      select: "name avatar",
-      model: "User",
-    });
+    const comment = await Comment.aggregate([
+      {
+        $match: {
+          _id: new Types.ObjectId(req.params.id)
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          postId: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          'user._id': 1,
+          'user.name': 1,
+          'user.avatar': 1
+        }
+      }
+    ]);
 
-    if (!comment) {
+    if (!comment[0]) {
       res.status(404).send({ message: "Comment not found" });
       return;
     }
 
-    res.status(200).send(comment);
+    res.status(200).send(comment[0]);
   } catch (err) {
     res.status(500).send({
       message: err instanceof Error ? err.message : "An error occurred",

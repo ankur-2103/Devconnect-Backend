@@ -267,36 +267,9 @@
         }
       }
     },
-    "/api/user/me": {
-      "get": {
-        "tags": ["User"],
-        "summary": "Get current user profile",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User profile retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "User not found"
-          }
-        }
-      },
+    "/api/users/me": {
       "put": {
-        "tags": ["User"],
+        "tags": ["Users"],
         "summary": "Update current user profile",
         "security": [
           {
@@ -306,7 +279,7 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
@@ -341,6 +314,11 @@
                   },
                   "avatar": {
                     "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Profile image file"
                   }
                 }
               }
@@ -358,34 +336,41 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
-          },
           "404": {
             "description": "User not found"
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }
     },
-    "/api/user": {
+    "/api/users/{id}": {
       "put": {
-        "tags": ["User"],
-        "summary": "Update user (admin only)",
+        "tags": ["Users"],
+        "summary": "Update user profile by ID (Admin only)",
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "_id": {
-                    "type": "string"
-                  },
                   "name": {
                     "type": "string"
                   },
@@ -417,6 +402,11 @@
                   },
                   "avatar": {
                     "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Profile image file"
                   }
                 }
               }
@@ -425,7 +415,7 @@
         },
         "responses": {
           "200": {
-            "description": "User updated successfully",
+            "description": "User profile updated successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -434,14 +424,11 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - Admin access required"
-          },
           "404": {
             "description": "User not found"
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }
