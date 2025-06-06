@@ -1,4 +1,4 @@
-import express, { Express } from "express";
+import express, { Express, RequestHandler } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
@@ -36,7 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 // Swagger UI setup
 app.use(
   "/api-docs",
-  swaggerUi.serve,
+  swaggerUi.serve as unknown as RequestHandler,
   swaggerUi.setup(swaggerDocument, {
     customCss: ".swagger-ui .topbar { display: none }",
     customSiteTitle: "DevConnect API Documentation",
