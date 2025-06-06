@@ -2,7 +2,7 @@ import express, { Express } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
-import swaggerDocument from "./swagger.json";
+const swaggerDocument = require('./swagger.json');
 import mongoose from "mongoose";
 import { Role as RoleModel } from "./app/models/role.model";
 import db from "./app/models";
