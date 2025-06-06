@@ -36,30 +36,20 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-app.get("/api-docs/swagger.json", (req, res) => {
-  res.json(swaggerDocument);
-});
-
 // Swagger UI setup
-// app.use(
-//   "/api-docs",
-//   swaggerUi.serve,
-//   swaggerUi.setup(swaggerDocument, {
-//     customCss: ".swagger-ui .topbar { display: none }",
-//     customSiteTitle: "DevConnect API Documentation",
-//   })
-// );
-
-
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "DevConnect API Documentation",
+  })
+);
 
 // Database connection
 mongoose
   .connect(
-    `mongodb+srv://ankurvasta123:${process.env.PASSWORD}@cluster0.1f6xg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`,
-    {
-      serverSelectionTimeoutMS: 10000,
-    }
+    `mongodb+srv://ankurvasta123:${process.env.PASSWORD}@cluster0.1f6xg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
   )
   .then(() => {
     console.log("Successfully connect to MongoDB.");
