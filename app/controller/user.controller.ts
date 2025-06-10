@@ -43,9 +43,7 @@ const updateMe = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.metadata!.id;
     const formData = req.body;
-    console.log("🚀 ~ updateMe ~ formData:", formData);
     const file = req.file;
-    console.log("🚀 ~ updateMe ~ file:", file);
 
     let avatarUrl = formData.avatar;
 
@@ -217,11 +215,11 @@ const searchUsers = async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
-
+    
     const page = parseInt(req.params.page || "1");
     const limit = parseInt(req.params.limit || "10");
     const skip = (page - 1) * limit;
-    const searchQuery = req.params.search || "";
+    const searchQuery = req.query.search || "";
 
     // Create search conditions
     const searchConditions = {

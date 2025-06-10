@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import db from "../models";
 import { Auth } from '../models/auth.model';
 import { DecodedToken } from '../models/common.model';
+import { RoleEnum } from '../enums/role.enum';
 
 const Role = db.role;
 
@@ -14,13 +15,11 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction): Pro
       return;
     }
 
-    // Check if the token is in the correct format
     if (!authHeader.startsWith('Bearer ')) {
       res.status(403).json({ message: "Invalid token format!" });
       return;
     }
 
-    // Extract the token from the Bearer string
     const token = authHeader.split(' ')[1];
 
     const secret = process.env.SECERET;
@@ -44,6 +43,20 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction): Pro
   }
 };
 
+// Helper function to check user roles
+const checkUserRoles = async (userId: string, requiredRoles: number[]): Promise<boolean> => {
+  try {
+    const user = await Auth.findById(userId);
+    if (!user) return false;
+
+    // Check if user has any of the required roles
+    return user.roles.some(role => requiredRoles.includes(role));
+  } catch (err) {
+    console.error('Error checking user roles:', err);
+    return false;
+  }
+};
+
 const isAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.metadata?.id) {
@@ -51,20 +64,15 @@ const isAdmin = async (req: Request, res: Response, next: NextFunction): Promise
       return;
     }
 
-    const user = await Auth.findById(req.metadata.id);
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-
-    const roles = await Role.find({ enum: { $in: user.roles } });
-    if (roles.some(role => role.name === "admin")) {
+    const hasAdminRole = await checkUserRoles(req.metadata.id, [RoleEnum.admin.enum]);
+    if (hasAdminRole) {
       next();
       return;
     }
 
     res.status(403).json({ message: "Require Admin Role!" });
   } catch (err) {
+    console.error('Admin role check error:', err);
     res.status(500).json({ message: err instanceof Error ? err.message : 'An error occurred' });
   }
 };
@@ -76,20 +84,15 @@ const isModerator = async (req: Request, res: Response, next: NextFunction): Pro
       return;
     }
 
-    const user = await Auth.findById(req.metadata.id);
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-
-    const roles = await Role.find({ enum: { $in: user.roles } });
-    if (roles.some(role => role.name === "moderator" || role.name === "admin")) {
+    const hasModeratorRole = await checkUserRoles(req.metadata.id, [RoleEnum.moderator.enum, RoleEnum.admin.enum]);
+    if (hasModeratorRole) {
       next();
       return;
     }
 
     res.status(403).json({ message: "Require Moderator Role!" });
   } catch (err) {
+    console.error('Moderator role check error:', err);
     res.status(500).json({ message: err instanceof Error ? err.message : 'An error occurred' });
   }
 };

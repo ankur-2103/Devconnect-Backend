@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { Post, IPost } from "../models/post.model";
 import { Types } from "mongoose";
 import { RoleEnum } from "../enums/role.enum";
-import supabase from '../../supabase';
+import supabase from "../../supabase";
 import {
   PaginatedResponse as SharedPaginatedResponse,
   DecodedToken,
@@ -17,6 +17,7 @@ interface PostRequest extends Request {
   query: {
     page?: string;
     limit?: string;
+    sortBy?: string;
   };
   file?: Express.Multer.File;
 }
@@ -60,32 +61,32 @@ const createPost = async (req: PostRequest, res: Response): Promise<void> => {
     const populatedPost = await Post.aggregate([
       {
         $match: {
-          _id: post._id
-        }
+          _id: post._id,
+        },
       },
       {
         $lookup: {
-          from: 'comments',
-          localField: '_id',
-          foreignField: 'postId',
-          as: 'comments'
-        }
+          from: "comments",
+          localField: "_id",
+          foreignField: "postId",
+          as: "comments",
+        },
       },
       {
         $addFields: {
-          commentsCount: { $size: '$comments' }
-        }
+          commentsCount: { $size: "$comments" },
+        },
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user'
-        }
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
       },
       {
-        $unwind: '$user'
+        $unwind: "$user",
       },
       {
         $project: {
@@ -96,11 +97,11 @@ const createPost = async (req: PostRequest, res: Response): Promise<void> => {
           createdAt: 1,
           updatedAt: 1,
           commentsCount: 1,
-          'user._id': 1,
-          'user.name': 1,
-          'user.avatar': 1
-        }
-      }
+          "user._id": 1,
+          "user.name": 1,
+          "user.avatar": 1,
+        },
+      },
     ]);
 
     res.status(201).send(populatedPost[0]);
@@ -117,27 +118,27 @@ const getAllPosts = async (_req: Request, res: Response): Promise<void> => {
     const posts = await Post.aggregate([
       {
         $lookup: {
-          from: 'comments',
-          localField: '_id',
-          foreignField: 'postId',
-          as: 'comments'
-        }
+          from: "comments",
+          localField: "_id",
+          foreignField: "postId",
+          as: "comments",
+        },
       },
       {
         $addFields: {
-          commentsCount: { $size: '$comments' }
-        }
+          commentsCount: { $size: "$comments" },
+        },
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user'
-        }
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
       },
       {
-        $unwind: '$user'
+        $unwind: "$user",
       },
       {
         $project: {
@@ -148,14 +149,14 @@ const getAllPosts = async (_req: Request, res: Response): Promise<void> => {
           createdAt: 1,
           updatedAt: 1,
           commentsCount: 1,
-          'user._id': 1,
-          'user.name': 1,
-          'user.avatar': 1
-        }
+          "user._id": 1,
+          "user.name": 1,
+          "user.avatar": 1,
+        },
       },
       {
-        $sort: { createdAt: -1 }
-      }
+        $sort: { createdAt: -1 },
+      },
     ]);
 
     res.status(200).send(posts);
@@ -172,32 +173,32 @@ const getPostById = async (req: Request, res: Response): Promise<void> => {
     const post = await Post.aggregate([
       {
         $match: {
-          _id: new Types.ObjectId(req.params.id)
-        }
+          _id: new Types.ObjectId(req.params.id),
+        },
       },
       {
         $lookup: {
-          from: 'comments',
-          localField: '_id',
-          foreignField: 'postId',
-          as: 'comments'
-        }
+          from: "comments",
+          localField: "_id",
+          foreignField: "postId",
+          as: "comments",
+        },
       },
       {
         $addFields: {
-          commentsCount: { $size: '$comments' }
-        }
+          commentsCount: { $size: "$comments" },
+        },
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user'
-        }
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
       },
       {
-        $unwind: '$user'
+        $unwind: "$user",
       },
       {
         $project: {
@@ -208,11 +209,11 @@ const getPostById = async (req: Request, res: Response): Promise<void> => {
           createdAt: 1,
           updatedAt: 1,
           commentsCount: 1,
-          'user._id': 1,
-          'user.name': 1,
-          'user.avatar': 1
-        }
-      }
+          "user._id": 1,
+          "user.name": 1,
+          "user.avatar": 1,
+        },
+      },
     ]);
 
     if (!post[0]) {
@@ -271,7 +272,7 @@ const updatePost = async (req: PostRequest, res: Response): Promise<void> => {
 
     const updatedPost = await Post.findByIdAndUpdate(
       req.params.id,
-      { 
+      {
         content: formData.content,
         docUri,
       },
@@ -286,32 +287,32 @@ const updatePost = async (req: PostRequest, res: Response): Promise<void> => {
     const populatedPost = await Post.aggregate([
       {
         $match: {
-          _id: updatedPost._id
-        }
+          _id: updatedPost._id,
+        },
       },
       {
         $lookup: {
-          from: 'comments',
-          localField: '_id',
-          foreignField: 'postId',
-          as: 'comments'
-        }
+          from: "comments",
+          localField: "_id",
+          foreignField: "postId",
+          as: "comments",
+        },
       },
       {
         $addFields: {
-          commentsCount: { $size: '$comments' }
-        }
+          commentsCount: { $size: "$comments" },
+        },
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user'
-        }
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
       },
       {
-        $unwind: '$user'
+        $unwind: "$user",
       },
       {
         $project: {
@@ -322,11 +323,11 @@ const updatePost = async (req: PostRequest, res: Response): Promise<void> => {
           createdAt: 1,
           updatedAt: 1,
           commentsCount: 1,
-          'user._id': 1,
-          'user.name': 1,
-          'user.avatar': 1
-        }
-      }
+          "user._id": 1,
+          "user.name": 1,
+          "user.avatar": 1,
+        },
+      },
     ]);
 
     res.status(200).send(populatedPost[0]);
@@ -356,11 +357,9 @@ const deletePost = async (req: PostRequest, res: Response): Promise<void> => {
     await Post.findByIdAndDelete(req.params.id);
     res.status(200).send({ message: "Post deleted successfully" });
   } catch (err) {
-    res
-      .status(500)
-      .send({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).send({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
 };
 
@@ -389,32 +388,32 @@ const toggleLike = async (req: PostRequest, res: Response): Promise<void> => {
     const updatedPost = await Post.aggregate([
       {
         $match: {
-          _id: post._id
-        }
+          _id: post._id,
+        },
       },
       {
         $lookup: {
-          from: 'comments',
-          localField: '_id',
-          foreignField: 'postId',
-          as: 'comments'
-        }
+          from: "comments",
+          localField: "_id",
+          foreignField: "postId",
+          as: "comments",
+        },
       },
       {
         $addFields: {
-          commentsCount: { $size: '$comments' }
-        }
+          commentsCount: { $size: "$comments" },
+        },
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user'
-        }
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
       },
       {
-        $unwind: '$user'
+        $unwind: "$user",
       },
       {
         $project: {
@@ -425,20 +424,18 @@ const toggleLike = async (req: PostRequest, res: Response): Promise<void> => {
           createdAt: 1,
           updatedAt: 1,
           commentsCount: 1,
-          'user._id': 1,
-          'user.name': 1,
-          'user.avatar': 1
-        }
-      }
+          "user._id": 1,
+          "user.name": 1,
+          "user.avatar": 1,
+        },
+      },
     ]);
 
     res.status(200).send(updatedPost[0]);
   } catch (err) {
-    res
-      .status(500)
-      .send({
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+    res.status(500).send({
+      message: err instanceof Error ? err.message : "An error occurred",
+    });
   }
 };
 
@@ -460,31 +457,31 @@ const getUserPosts = async (req: PostRequest, res: Response): Promise<void> => {
     const [posts, total] = await Promise.all([
       Post.aggregate([
         {
-          $match: { userId }
+          $match: { userId },
         },
         {
           $lookup: {
-            from: 'comments',
-            localField: '_id',
-            foreignField: 'postId',
-            as: 'comments'
-          }
+            from: "comments",
+            localField: "_id",
+            foreignField: "postId",
+            as: "comments",
+          },
         },
         {
           $addFields: {
-            commentsCount: { $size: '$comments' }
-          }
+            commentsCount: { $size: "$comments" },
+          },
         },
         {
           $lookup: {
-            from: 'users',
-            localField: 'userId',
-            foreignField: '_id',
-            as: 'user'
-          }
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
         },
         {
-          $unwind: '$user'
+          $unwind: "$user",
         },
         {
           $project: {
@@ -495,22 +492,22 @@ const getUserPosts = async (req: PostRequest, res: Response): Promise<void> => {
             createdAt: 1,
             updatedAt: 1,
             commentsCount: 1,
-            'user._id': 1,
-            'user.name': 1,
-            'user.avatar': 1
-          }
+            "user._id": 1,
+            "user.name": 1,
+            "user.avatar": 1,
+          },
         },
         {
-          $sort: { createdAt: -1 }
+          $sort: { createdAt: -1 },
         },
         {
-          $skip: skip
+          $skip: skip,
         },
         {
-          $limit: limit
-        }
+          $limit: limit,
+        },
       ]),
-      Post.countDocuments({ userId })
+      Post.countDocuments({ userId }),
     ]);
 
     const hasMore = skip + posts.length < total;
@@ -545,36 +542,50 @@ const getFeed = async (req: PostRequest, res: Response): Promise<void> => {
     const limit = parseInt(req.query.limit || "10");
     const skip = (page - 1) * limit;
 
+    // Determine the sorting field dynamically
+    let sortStage: Record<string, 1 | -1> = {};
+
+    if (req.query.sortBy === "likes") {
+      sortStage = { likes: -1 };
+    } else if (req.query.sortBy === "comments") {
+      sortStage = { commentsCount: -1 };
+    } else if (req.query.sortBy === "recent") {
+      sortStage = { createdAt: -1 };
+    } else {
+      // If no sortBy param, sort by: most recent, most likes, most comments
+      sortStage = { createdAt: -1, likes: -1, commentsCount: -1 };
+    }
+
     const userId = new Types.ObjectId(req.metadata.id);
-    
+
     const [posts, total] = await Promise.all([
       Post.aggregate([
         {
-          $match: { userId: { $ne: userId } }
+          $match: { userId: { $ne: userId } },
         },
         {
           $lookup: {
-            from: 'comments',
-            localField: '_id',
-            foreignField: 'postId',
-            as: 'comments'
-          }
+            from: "comments",
+            localField: "_id",
+            foreignField: "postId",
+            as: "comments",
+          },
         },
         {
           $addFields: {
-            commentsCount: { $size: '$comments' }
-          }
+            commentsCount: { $size: "$comments" },
+          },
         },
         {
           $lookup: {
-            from: 'users',
-            localField: 'userId',
-            foreignField: '_id',
-            as: 'user'
-          }
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
         },
         {
-          $unwind: '$user'
+          $unwind: "$user",
         },
         {
           $project: {
@@ -585,22 +596,22 @@ const getFeed = async (req: PostRequest, res: Response): Promise<void> => {
             createdAt: 1,
             updatedAt: 1,
             commentsCount: 1,
-            'user._id': 1,
-            'user.name': 1,
-            'user.avatar': 1
-          }
+            "user._id": 1,
+            "user.name": 1,
+            "user.avatar": 1,
+          },
         },
         {
-          $sort: { createdAt: -1 }
+          $sort: sortStage,
         },
         {
-          $skip: skip
+          $skip: skip,
         },
         {
-          $limit: limit
-        }
+          $limit: limit,
+        },
       ]),
-      Post.countDocuments({ userId: { $ne: userId } })
+      Post.countDocuments({ userId: { $ne: userId } }),
     ]);
 
     const hasMore = skip + posts.length < total;

@@ -12,7 +12,9 @@ import { RoleEnum } from "./app/enums/role.enum";
 import postRoutes from "./app/routes/post.routes";
 import uploadRoutes from "./app/routes/upload.routes";
 import commentRoutes from "./app/routes/comment.routes";
+import adminRoutes from "./app/routes/admin.routes";
 import ServerlessHttp from "serverless-http/serverless-http";
+import './logger';
 
 dotenv.config();
 
@@ -94,6 +96,7 @@ userRoutes(app);
 postRoutes(app);
 commentRoutes(app);
 uploadRoutes(app);
+adminRoutes(app);
 
 export const handler = ServerlessHttp(app);
 
