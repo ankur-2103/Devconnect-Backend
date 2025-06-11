@@ -2,11 +2,12 @@ import { Request, Response } from "express";
 import { Post, IPost } from "../models/post.model";
 import { Types } from "mongoose";
 import { RoleEnum } from "../enums/role.enum";
-import supabase from "../../supabase";
+import supabase from "../services/supabase.service";
 import {
   PaginatedResponse as SharedPaginatedResponse,
   DecodedToken,
 } from "../models/common.model";
+import { generateSocialMediaPost } from "../services/chatgpt.service";
 
 interface PostRequest extends Request {
   metadata?: DecodedToken;
@@ -635,6 +636,22 @@ const getFeed = async (req: PostRequest, res: Response): Promise<void> => {
   }
 };
 
+const generatePostContent = async (req: Request, res: Response): Promise<void> => {
+  const { prompt } = req.body;
+
+  if (!prompt) {
+    res.status(400).json({ error: "Please provide a prompt" });
+  }
+
+  try {
+    const generatedPost = await generateSocialMediaPost(prompt);
+    res.status(200).json({ post: generatedPost });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error generating social media post" });
+  }
+};
+
 export default {
   createPost,
   getAllPosts,
@@ -644,4 +661,5 @@ export default {
   toggleLike,
   getUserPosts,
   getFeed,
+  generatePostContent
 };

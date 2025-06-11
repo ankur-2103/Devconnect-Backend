@@ -4,7 +4,9 @@ import { AuthUser } from "../models/auth.model";
 import { Types } from "mongoose";
 import { PaginatedResponse } from "../models/common.model";
 import { SearchUser } from "../models/user.model";
-import supabase from "../../supabase";
+import supabase from "../services/supabase.service";
+import { Auth } from "../models/auth.model";
+import { RoleEnum } from "../enums/role.enum";
 
 const userMe = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -276,6 +278,16 @@ const getUserById = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Check if requester is admin
+    const isAdmin = req.metadata?.roles.includes(RoleEnum.admin.enum);
+    
+    // Get user roles if requester is admin
+    let userRoles: number[] = [];
+    if (isAdmin) {
+      const auth = await Auth.findById(user._id);
+      userRoles = auth?.roles || [];
+    }
+
     const authUser: AuthUser = {
       _id: user._id.toString(),
       name: user.name,
@@ -288,7 +300,7 @@ const getUserById = async (req: Request, res: Response): Promise<void> => {
         website: user.social.website,
       },
       avatar: user.avatar,
-      roles: [], //x We don't include roles in public profile
+      roles: userRoles,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };

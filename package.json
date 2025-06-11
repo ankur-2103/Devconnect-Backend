@@ -15,7 +15,10 @@
   "dependencies": {
     "@faker-js/faker": "^8.4.1",
     "@supabase/supabase-js": "^2.49.10",
+    "@types/axios": "^0.9.36",
     "@types/faker": "^6.6.8",
+    "@types/nodemailer": "^6.4.17",
+    "axios": "^1.9.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -23,6 +26,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.10.1",
     "multer": "^2.0.1",
+    "nodemailer": "^7.0.3",
     "serverless-http": "^3.2.0",
     "swagger-autogen": "^2.23.7",
     "swagger-typescript-api": "^13.1.3",

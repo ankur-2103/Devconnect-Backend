@@ -37,8 +37,9 @@ const createRoles = async () => {
 
 // Create users
 const createUsers = async (count: number) => {
-  await Auth.deleteMany({});
-  await User.deleteMany({});
+  // Delete only non-admin users
+  await Auth.deleteMany({ roles: { $nin: [RoleEnum.admin.enum] } });
+  await User.deleteMany({ _id: { $in: await Auth.find({ roles: { $nin: [RoleEnum.admin.enum] } }).select('_id') } });
 
   const users = [];
   for (let i = 0; i < count; i++) {
@@ -46,7 +47,7 @@ const createUsers = async (count: number) => {
       username: faker.internet.userName(),
       email: faker.internet.email(),
       password: faker.internet.password(),
-      roles: [getRandomRole()]
+      roles: [RoleEnum.user.enum]
     });
     await auth.save();
 

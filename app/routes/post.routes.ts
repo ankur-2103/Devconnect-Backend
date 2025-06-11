@@ -21,4 +21,7 @@ export default function(app: Express): void {
   app.put("/api/posts/:id", [authJwt.verifyToken, upload.single('file')], controller.updatePost);
   app.delete("/api/posts/:id", [authJwt.verifyToken], controller.deletePost);
   app.post("/api/posts/:id/like", [authJwt.verifyToken], controller.toggleLike);
+
+  // AI post generation route
+  app.post("/api/posts/generate", [authJwt.verifyToken], controller.generatePostContent);
 }

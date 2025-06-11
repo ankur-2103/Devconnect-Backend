@@ -30,6 +30,11 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction): Pro
 
     const decoded = jwt.verify(token, secret) as DecodedToken;
 
+    if (!decoded.roles || decoded.roles.length === 0) {
+      res.status(403).json({ message: "User must have at least one role" });
+      return;
+    }
+
     req.metadata = {
       id: decoded.id,
       username: decoded.username,

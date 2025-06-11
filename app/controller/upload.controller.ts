@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import supabase from '../../supabase';
+import supabase from '../services/supabase.service';
 
 export const uploadImageToSupabase = async (req: Request, res: Response) => {
   try {
