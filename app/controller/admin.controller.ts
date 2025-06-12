@@ -116,7 +116,7 @@ const getDashboardStats = async (
     // Get recent posts with user information
     const recentPosts = await Post.aggregate([
       { $sort: { createdAt: -1 } },
-      { $limit: 5 },
+      { $limit: 6 },
       {
         $lookup: {
           from: "users",
@@ -149,7 +149,7 @@ const getDashboardStats = async (
         },
       },
       { $sort: { likesCount: -1 } },
-      { $limit: 5 },
+      { $limit: 6 },
       {
         $lookup: {
           from: "users",
@@ -191,7 +191,7 @@ const getDashboardStats = async (
         },
       },
       { $sort: { commentsCount: -1 } },
-      { $limit: 5 },
+      { $limit: 6 },
       {
         $lookup: {
           from: "users",
