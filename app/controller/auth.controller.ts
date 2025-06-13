@@ -1,13 +1,10 @@
 import { Request, Response } from "express";
 import db from "../models";
-import { IUser } from "../models/user.model";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { Types } from "mongoose";
 import { Auth } from "../models/auth.model";
 import { ResetToken } from "../models/resetToken.model";
 import { RoleEnum } from "../enums/role.enum";
-import crypto from "crypto";
 import { sendPasswordResetEmail } from "../services/email.service";
 
 const User = db.user;

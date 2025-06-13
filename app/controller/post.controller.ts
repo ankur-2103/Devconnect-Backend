@@ -28,14 +28,14 @@ const createPost = async (req: PostRequest, res: Response): Promise<void> => {
   try {
     const formData = req.body;
     const file = req.file;
-    let docUri = formData.docUri || "";
+    let docUri = formData.docUri ?? "";
 
     // If there's a file in the form data, upload it to Supabase
     if (file) {
       const fileName = `${Date.now()}-${file.originalname}`;
       const bucket = process.env.SUPABASE_BUCKET as string;
 
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file.buffer, {
           contentType: file.mimetype,
@@ -248,14 +248,14 @@ const updatePost = async (req: PostRequest, res: Response): Promise<void> => {
 
     const formData = req.body;
     const file = req.file;
-    let docUri = formData.docUri || post.docUri;
+    let docUri = formData.docUri ?? post.docUri;
 
     // If there's a file in the form data, upload it to Supabase
     if (file) {
       const fileName = `${Date.now()}-${file.originalname}`;
       const bucket = process.env.SUPABASE_BUCKET as string;
 
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file.buffer, {
           contentType: file.mimetype,
@@ -448,12 +448,12 @@ const getUserPosts = async (req: PostRequest, res: Response): Promise<void> => {
       return;
     }
 
-    const page = parseInt(req.query.page || "1");
-    const limit = parseInt(req.query.limit || "10");
+    const page = parseInt(req.query.page ?? "1");
+    const limit = parseInt(req.query.limit ?? "10");
     const skip = (page - 1) * limit;
 
     // Use userId from params if available, otherwise use authenticated user's id
-    const userId = new Types.ObjectId(req.params.userId || req.metadata.id);
+    const userId = new Types.ObjectId(req.params.userId ?? req.metadata.id);
 
     const [posts, total] = await Promise.all([
       Post.aggregate([
@@ -539,8 +539,8 @@ const getFeed = async (req: PostRequest, res: Response): Promise<void> => {
       return;
     }
 
-    const page = parseInt(req.query.page || "1");
-    const limit = parseInt(req.query.limit || "10");
+    const page = parseInt(req.query.page ?? "1");
+    const limit = parseInt(req.query.limit ?? "10");
     const skip = (page - 1) * limit;
 
     // Determine the sorting field dynamically
@@ -636,7 +636,10 @@ const getFeed = async (req: PostRequest, res: Response): Promise<void> => {
   }
 };
 
-const generatePostContent = async (req: Request, res: Response): Promise<void> => {
+const generatePostContent = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { prompt } = req.body;
 
   if (!prompt) {
@@ -661,5 +664,5 @@ export default {
   toggleLike,
   getUserPosts,
   getFeed,
-  generatePostContent
+  generatePostContent,
 };

@@ -52,13 +52,16 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction): Pro
 const checkUserRoles = async (userId: string, requiredRoles: number[]): Promise<boolean> => {
   try {
     const user = await Auth.findById(userId);
-    if (!user) return false;
+    if (!user) {
+      console.warn(`User not found with ID: ${userId}`);
+      return false;
+    }
 
     // Check if user has any of the required roles
     return user.roles.some(role => requiredRoles.includes(role));
   } catch (err) {
-    console.error('Error checking user roles:', err);
-    return false;
+    console.error('Error checking user roles:', err instanceof Error ? err.message : 'Unknown error');
+    throw new Error(err instanceof Error ? err.message : 'Failed to check user roles');
   }
 };
 

@@ -100,19 +100,6 @@ const getDashboardStats = async (
       createdAt: { $gte: sevenDaysAgo },
     });
 
-    // // Get user role distribution
-    // const roleDistribution = await Auth.aggregate([
-    //   {
-    //     $unwind: "$roles",
-    //   },
-    //   {
-    //     $group: {
-    //       _id: "$roles",
-    //       count: { $sum: 1 },
-    //     },
-    //   },
-    // ]);
-
     // Get recent posts with user information
     const recentPosts = await Post.aggregate([
       { $sort: { createdAt: -1 } },

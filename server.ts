@@ -1,11 +1,10 @@
-import express, { Express, RequestHandler } from "express";
+import express, { Express } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "./swagger.json";
 import mongoose from "mongoose";
 import { Role as RoleModel } from "./app/models/role.model";
-import db from "./app/models";
 import authRoutes from "./app/routes/auth.routes";
 import userRoutes from "./app/routes/user.routes";
 import { RoleEnum } from "./app/enums/role.enum";
@@ -14,7 +13,7 @@ import uploadRoutes from "./app/routes/upload.routes";
 import commentRoutes from "./app/routes/comment.routes";
 import adminRoutes from "./app/routes/admin.routes";
 import ServerlessHttp from "serverless-http/serverless-http";
-import './logger';
+import "./logger";
 
 dotenv.config();
 

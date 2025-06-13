@@ -9,7 +9,7 @@ export const uploadImageToSupabase = async (req: Request, res: Response) => {
     const fileName = `${Date.now()}-${file.originalname}`;
     const bucket = process.env.SUPABASE_BUCKET as string;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(bucket)
       .upload(fileName, file.buffer, {
         contentType: file.mimetype,

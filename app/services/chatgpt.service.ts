@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || ""; // Set in .env
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY ?? ""; // Set in .env
 const RAPIDAPI_URL = "https://chatgpt-42.p.rapidapi.com/gpt4";
 
 export const generateSocialMediaPost = async (
@@ -31,9 +31,9 @@ export const generateSocialMediaPost = async (
     );
 
     // The API might return data directly
-    const postContent = response.data?.result || response.data;
+    const postContent = response.data?.result ?? response.data;
     // Remove ```html and ``` markers if they exist
-    const cleanedContent = postContent.replace(/^```html\n?|\n?```$/g, '');
+    const cleanedContent = postContent.replace(/(^```html\n?)|(\n?```$)/g, '');
     return cleanedContent;
   } catch (error) {
     console.error("Error generating social media post:", error);

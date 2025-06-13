@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import db from "../models";
-import { IUser } from '../models/user.model';
 import { Auth } from '../models/auth.model';
 
 const Role = db.role;
-const User = db.user;
 
 const checkDuplicateUsernameOrEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

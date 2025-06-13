@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import { User } from "../models/user.model";
-import { AuthUser } from "../models/auth.model";
+import { User, SearchUser } from "../models/user.model";
+import { AuthUser, Auth } from "../models/auth.model";
 import { Types } from "mongoose";
 import { PaginatedResponse } from "../models/common.model";
-import { SearchUser } from "../models/user.model";
 import supabase from "../services/supabase.service";
-import { Auth } from "../models/auth.model";
 import { RoleEnum } from "../enums/role.enum";
 
 const userMe = async (req: Request, res: Response): Promise<void> => {
@@ -28,7 +26,7 @@ const userMe = async (req: Request, res: Response): Promise<void> => {
         website: user.social.website,
       },
       avatar: user.avatar,
-      roles: req.metadata?.roles || [],
+      roles: req.metadata?.roles ?? [],
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };
@@ -54,7 +52,7 @@ const updateMe = async (req: Request, res: Response): Promise<void> => {
       const fileName = `${Date.now()}-${file.originalname}`;
       const bucket = process.env.SUPABASE_BUCKET as string;
 
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file.buffer, {
           contentType: file.mimetype,
@@ -113,7 +111,7 @@ const updateMe = async (req: Request, res: Response): Promise<void> => {
         website: user.social.website,
       },
       avatar: user.avatar,
-      roles: req.metadata?.roles || [],
+      roles: req.metadata?.roles ?? [],
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };
@@ -139,7 +137,7 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
       const fileName = `${Date.now()}-${file.originalname}`;
       const bucket = process.env.SUPABASE_BUCKET as string;
 
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file.buffer, {
           contentType: file.mimetype,
@@ -198,7 +196,7 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
         website: user.social.website,
       },
       avatar: user.avatar,
-      roles: req.metadata?.roles || [],
+      roles: req.metadata?.roles ?? [],
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };
@@ -217,15 +215,15 @@ const searchUsers = async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
-    
-    const page = parseInt(req.params.page || "1");
-    const limit = parseInt(req.params.limit || "10");
+
+    const page = parseInt(req.params.page ?? "1");
+    const limit = parseInt(req.params.limit ?? "10");
     const skip = (page - 1) * limit;
-    const searchQuery = req.query.search || "";
+    const searchQuery = req.query.search ?? "";
 
     // Create search conditions
     const searchConditions = {
-      _id: { $ne: new Types.ObjectId((req.metadata.id as string) || "") }, // Exclude current user
+      _id: { $ne: new Types.ObjectId((req.metadata.id as string) ?? "") }, // Exclude current user
       name: { $ne: "" }, // Exclude users with empty names
       $or: [
         { name: { $regex: searchQuery, $options: "i" } },
@@ -280,12 +278,12 @@ const getUserById = async (req: Request, res: Response): Promise<void> => {
 
     // Check if requester is admin
     const isAdmin = req.metadata?.roles.includes(RoleEnum.admin.enum);
-    
+
     // Get user roles if requester is admin
     let userRoles: number[] = [];
     if (isAdmin) {
       const auth = await Auth.findById(user._id);
-      userRoles = auth?.roles || [];
+      userRoles = auth?.roles ?? [];
     }
 
     const authUser: AuthUser = {
